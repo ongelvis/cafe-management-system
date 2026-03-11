@@ -1,7 +1,7 @@
 -- Seed Data for Cafes
 INSERT INTO cafes (id, name, description, location) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'Moonbucks', 'Starbucks Competitor', 'Tanjong Pagar'),
-('661f9511-f30c-52e5-b827-557766551111', 'Robusta', 'Robusta Competitor', 'Tanjong Pagar'),
+('661f9511-f30c-52e5-b827-557766551111', 'Robusta', 'Arabica Competitor', 'Tanjong Pagar'),
 ('772a0622-f41d-63f6-c938-668877662222', 'UnLuckin', 'Luckin Coffee Competitor', 'Orchard')
 ON CONFLICT (id) DO NOTHING;
 

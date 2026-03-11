@@ -57,7 +57,7 @@ echo "============================================================"
 RES=$(curl -s "$BASE/cafes")
 check "Returns all 3 cafes" "Moonbucks" "$RES"
 check "Moonbucks has 3 employees" '"name":"Moonbucks"' "$RES"
-check "Moonbucks appears before Robusta (sorted desc)" '"name":"Moonbucks"' "$(echo $RES | sed 's/"Robusta".*//")" 
+check "Moonbucks appears before Robusta (sorted desc)" '"name":"Moonbucks"' "$(echo $RES | sed 's/"Robusta".*//')" 
 
 echo ""
 echo "-- GET /cafes?location=Tanjong Pagar"
