@@ -1,0 +1,5 @@
+/* App-level overrides */
+.ant-layout-header .ant-menu-item a {
+  color: inherit;
+}
+
