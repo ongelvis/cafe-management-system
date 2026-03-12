@@ -21,9 +21,24 @@ A full-stack web application for managing cafes and their employees. Built with 
 
 ---
 
-## Running with Docker Compose (recommended)
+## Environment Overview
 
-This starts all three services — frontend, backend, and PostgreSQL — in an isolated Docker network.
+There are three environments, each with a different configuration:
+
+| Environment | Frontend | Backend | Database |
+|---|---|---|---|
+| Option 1 — Docker stack | `http://localhost` (port 80, served by Nginx) | `http://localhost:3000` | Local Docker Postgres |
+| Option 2 — Dev mode (hot reload) | `http://localhost:5173` (Vite dev server) | `http://localhost:3000` | Local Docker Postgres |
+
+> **Why port 80 for Docker?** The frontend container runs Nginx which listens on port 80. Port 5173 is Vite's dev server and is only used in Option 2.
+
+`VITE_API_BASE_URL` is **baked into the frontend bundle at build time**. If the URL ever changes, the frontend image must be **rebuilt** (`docker compose up --build`), not just restarted.
+
+---
+
+## Option 1 — Full Docker Stack (closest to production)
+
+All three services run as containers. Use this to verify the Dockerized app works before deploying.
 
 ### 1. Clone the repository
 
@@ -32,82 +47,79 @@ git clone <your-repo-url>
 cd cafe-management-system
 ```
 
-### 2. Create your environment file
+### 2. Create the root environment file
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your chosen values:
+The default values in `.env.example` work out of the box for local Docker:
 
 ```env
 DB_NAME=cafe_db
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
+DB_USER=user
+DB_PASSWORD=password
 PORT=3000
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
-> **Note:** `VITE_API_BASE_URL` is baked into the frontend at build time and must be reachable from the **user's browser**. For a deployed server, set it to your public backend URL (e.g. `https://api.yourdomain.com`).
-
 ### 3. Build and start
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-| Service  | URL                   |
-|----------|-----------------------|
-| Frontend | http://localhost      |
-| Backend  | http://localhost:3000 |
-| Database | localhost:5432        |
+| Service  | URL                    |
+|----------|------------------------|
+| Frontend | http://localhost       |
+| Backend  | http://localhost:3000  |
+| Database | localhost:5432         |
 
-The database schema and seed data are applied automatically on first start via the `./database` volume mount.
+The `./database` volume mount automatically runs `schema.sql` then `seed.sql` on first start.
 
-### 4. Stop
+### 4. Subsequent starts (no code changes)
 
 ```bash
-docker compose down
+docker compose up -d
 ```
 
-To also wipe the database volume (all data will be lost):
+Only use `--build` again when you change code or `.env` values.
+
+### 5. Stop
 
 ```bash
-docker compose down -v
+docker compose down          # stop containers, keep database volume
+docker compose down -v       # stop containers AND wipe all data
 ```
 
 ---
 
-## Running Locally (without Docker)
+## Option 2 — Dev Mode (hot reload)
 
-### Prerequisites
+Run only the database in Docker; run the backend and frontend directly with Node for fast feedback and hot reloading.
 
-* Node.js 20+
-* PostgreSQL 15
-
-### 1. Database
+### 1. Start only the database container
 
 ```bash
-psql -U <user> -d <dbname> -f database/schema.sql
-psql -U <user> -d <dbname> -f database/seed.sql
+docker compose up db -d
 ```
 
 ### 2. Backend
 
 ```bash
 cd backend
-cp .env.example .env   # fill in DB_* values
+cp .env.example .env         # defaults point to local Docker Postgres
 npm install
-npm run dev            # http://localhost:3000
+npm run dev                  # http://localhost:3000, restarts on file save
 ```
 
 ### 3. Frontend
 
 ```bash
 cd frontend
-cp .env.example .env   # set VITE_API_BASE_URL=http://localhost:3000
+cp .env.example .env         # VITE_API_BASE_URL=http://localhost:3000
 npm install
-npm run dev            # http://localhost:5173
+npm run dev                  # http://localhost:5173, hot reloads on file save
 ```
 
 ---
