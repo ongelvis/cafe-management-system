@@ -8,3 +8,6 @@ Thumbs.db
 
 # Docker
 .docker/
+
+# Environment variables
+.env

@@ -1,103 +1,221 @@
 # Café & Employee Management System
 
-This repository contains a full-stack web application developed for the GIC Full Stack Software Engineer Internship technical assessment. It is a "Café Employee" manager that allows users to view, create, update, and delete cafés and their associated employees.
+A full-stack web application for managing cafes and their employees. Built with a Node.js/TypeScript backend (CQRS pattern via `mediatr-ts`), a React/Vite frontend (Ant Design + Ag-Grid), and PostgreSQL.
 
-## 🚀 Live Demo
+## Live Demo
 
-* **Frontend / Hosted App:** [Insert your deployed URL here]
-* **API Endpoint:** [Insert your deployed Backend URL here]
+* **Frontend:** [Insert your deployed URL here]
+* **API:** [Insert your deployed backend URL here]
 
-## 🛠️ Tech Stack & Architecture
+---
 
-### Backend
+## Tech Stack
 
-* **Runtime:** Node.js v22.x+ (TypeScript)
-* **Database:** PostgreSQL
-* **Architecture:** Clean Architecture & CQRS (Command Query Responsibility Segregation)
-* **Patterns:** Mediator Pattern (`mediatr-ts` for Dependency Injection and Handler routing)
-* **API:** RESTful Express.js
+| Layer | Technology |
+|---|---|
+| Backend | Node.js, TypeScript, Express 5, `mediatr-ts` (CQRS) |
+| Database | PostgreSQL 15 |
+| Frontend | React 19, Vite, Ant Design, Ag-Grid, React Router v7 |
+| HTTP | Axios |
+| Container | Docker, Docker Compose, Nginx |
 
-### Frontend
+---
 
-* **Framework:** React.js 19 (Vite)
-* **Table Component:** Ag-Grid Community
-* **UI & CSS Framework:** Ant Design (Antd)
-* **State/Routing:** React Router DOM (Data Router)
-* **HTTP Client:** Axios
+## Running with Docker Compose (recommended)
 
-## 📂 Project Structure
+This starts all three services — frontend, backend, and PostgreSQL — in an isolated Docker network.
 
-This project is organized as a monorepo with explicit boundary separations:
+### 1. Clone the repository
 
-* `/backend`: Contains the REST API, organized using Clean Architecture (`api`, `application`, `domain`, `infra`).
-* `/frontend`: Contains the React SPA with reusable Antd components, custom hooks, and Ag-Grid tables.
-* `/database`: Contains `schema.sql` for DDL and `seed.sql` for initial DML population.
+```bash
+git clone <your-repo-url>
+cd cafe-management-system
+```
 
-## ⚙️ Local Setup & Installation
+### 2. Create your environment file
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your chosen values:
+
+```env
+DB_NAME=cafe_db
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+PORT=3000
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+> **Note:** `VITE_API_BASE_URL` is baked into the frontend at build time and must be reachable from the **user's browser**. For a deployed server, set it to your public backend URL (e.g. `https://api.yourdomain.com`).
+
+### 3. Build and start
+
+```bash
+docker compose up --build
+```
+
+| Service  | URL                   |
+|----------|-----------------------|
+| Frontend | http://localhost      |
+| Backend  | http://localhost:3000 |
+| Database | localhost:5432        |
+
+The database schema and seed data are applied automatically on first start via the `./database` volume mount.
+
+### 4. Stop
+
+```bash
+docker compose down
+```
+
+To also wipe the database volume (all data will be lost):
+
+```bash
+docker compose down -v
+```
+
+---
+
+## Running Locally (without Docker)
 
 ### Prerequisites
 
-* Node.js (v22.x or above)
-* Docker Desktop (for the PostgreSQL database)
+* Node.js 20+
+* PostgreSQL 15
 
-### 1. Start the Database
-
-The PostgreSQL database is containerized. To start it and automatically run the schema and seed scripts, navigate to the root directory and run:
+### 1. Database
 
 ```bash
-docker compose up -d
-
+psql -U <user> -d <dbname> -f database/schema.sql
+psql -U <user> -d <dbname> -f database/seed.sql
 ```
 
-*(Note: The database runs on port 5432. Credentials can be found in `docker-compose.yml`)*
-
-### 2. Start the Backend Server
-
-Open a new terminal and navigate to the `backend` directory:
+### 2. Backend
 
 ```bash
 cd backend
+cp .env.example .env   # fill in DB_* values
 npm install
-npm run dev
-
+npm run dev            # http://localhost:3000
 ```
 
-*The API will be available at `http://localhost:3000/api`.*
-
-### 3. Start the Frontend Application
-
-Open another terminal and navigate to the `frontend` directory:
+### 3. Frontend
 
 ```bash
 cd frontend
+cp .env.example .env   # set VITE_API_BASE_URL=http://localhost:3000
 npm install
-npm run dev
-
+npm run dev            # http://localhost:5173
 ```
 
-*The UI will be available at `http://localhost:5173`.*
+---
 
-## 🧪 Testing the API
+## API Reference
 
-A bash script is included to automatically verify the backend RESTful endpoints, data constraints (like custom `UIXXXXXXX` formats), and cascading delete rules.
+### Cafes
 
-Ensure the backend and database are running, then execute from the root directory:
+| Method | Endpoint                    | Description                                |
+|--------|-----------------------------|--------------------------------------------|
+| GET    | `/cafes`                    | List all cafes, sorted by employee count desc |
+| GET    | `/cafes?location=<loc>`     | Filter cafes by location                   |
+| POST   | `/cafes`                    | Create a cafe                              |
+| PUT    | `/cafes/:id`                | Update a cafe                              |
+| DELETE | `/cafes/:id`                | Delete a cafe (cascades to employees)      |
+
+**POST/PUT body:**
+```json
+{
+  "name": "Moonbucks",
+  "description": "Starbucks Competitor",
+  "location": "Tanjong Pagar",
+  "logo": "<base64 string, optional>"
+}
+```
+
+### Employees
+
+| Method | Endpoint                      | Description                                  |
+|--------|-------------------------------|----------------------------------------------|
+| GET    | `/employees`                  | List all employees, sorted by days worked desc |
+| GET    | `/employees?cafe=<name>`      | Filter employees by cafe name                |
+| POST   | `/employees`                  | Create an employee                           |
+| PUT    | `/employees`                  | Update an employee                           |
+| DELETE | `/employees/:id`              | Delete an employee                           |
+
+**POST body:**
+```json
+{
+  "name": "Alice Lim",
+  "email_address": "alice@example.com",
+  "phone_number": "91112222",
+  "gender": "Female",
+  "cafe_id": "<uuid, optional>"
+}
+```
+
+**PUT body:** same as POST plus `"id": "UIXXXXXXX"`.
+
+---
+
+## Testing the Backend
+
+With the backend and database running:
 
 ```bash
 bash test-backend.sh
-
 ```
 
-## 💡 Key Design Decisions
+All tests should report `PASS`. The script tests all CRUD endpoints and reverts any mutations it makes, leaving the seed data intact.
+
+---
+
+## Project Structure
+
+```
+cafe-management-system/
+├── .env.example               # Root env template for docker-compose
+├── docker-compose.yml
+├── test-backend.sh
+├── backend/
+│   ├── Dockerfile
+│   ├── tsconfig.build.json    # Production TS compile config (commonjs, outDir: dist)
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── api/routes.ts
+│   │   ├── application/
+│   │   │   ├── commands/      # Create/Update/Delete handlers (CQRS)
+│   │   │   └── queries/       # GetCafes/GetEmployees handlers
+│   │   ├── domain/
+│   │   └── infra/Database.ts  # pg connection pool
+├── frontend/
+│   ├── Dockerfile
+│   ├── nginx.conf             # SPA fallback routing (try_files → index.html)
+│   ├── src/
+│   │   ├── api/index.ts       # Axios client + typed interfaces
+│   │   ├── components/        # ReusableTextbox
+│   │   ├── hooks/             # useUnsavedChanges
+│   │   └── pages/             # CafesPage, EmployeesPage, CafeForm, EmployeeForm
+└── database/
+    ├── schema.sql
+    └── seed.sql
+```
+
+---
+
+## Key Design Decisions
 
 ### Backend
 
-* **Transaction Management:** Database transactions (`BEGIN` / `COMMIT`) are used in write-heavy commands (like creating an employee or deleting a café) to guarantee atomic operations and data integrity across junction tables.
-* **Dynamic Derived Fields:** Metrics like an employee's `days_worked` are calculated dynamically in the SQL queries based on a fixed `start_date`, rather than storing volatile daily integers in the database.
-* **Decoupled Architecture:** Using the Mediator pattern (`mediatr-ts`) completely decouples the Express routing layer from the core business logic, adhering strictly to enterprise-level Clean Architecture practices.
+* **CQRS via Mediator:** Commands (writes) and Queries (reads) are separated into distinct handler classes. The Express router sends a message object to `mediator.send()` — it has no direct dependency on any handler. This decouples transport (HTTP) from business logic.
+* **Connection Pooling:** `pg.Pool` maintains persistent database connections, avoiding the overhead of opening a new TCP connection on every request.
+* **Derived fields in SQL:** `days_worked` is computed as `CURRENT_DATE - start_date` directly in the query rather than stored as a column, keeping data accurate without scheduled updates.
 
 ### Frontend
 
-* **Centralized API Layer:** All HTTP calls are decoupled from UI components and managed in a dedicated `api/index.ts` file with strict TypeScript interfaces.
-* **Advanced Routing:** Utilizes React Router's `createBrowserRouter` (data router context) to enable robust in-app navigation guards (`useBlocker`) for unsaved form changes.
+* **Data Router (`createBrowserRouter`):** Required to use React Router's `useBlocker` hook for the unsaved changes guard. The traditional `<BrowserRouter>` does not support blockers.
+* **`Promise.all` for edit prefill:** When opening the employee edit form, both the cafe list and the employee list are fetched in parallel. This prevents a race condition where `form.setFieldsValue` runs before the cafe dropdown options are loaded.
+* **`VITE_API_BASE_URL` build arg:** Vite bakes env variables into the static bundle at build time. Docker Compose passes it as a `build arg` so the correct URL is embedded for each environment without rebuilding the image separately.
+* **Nginx SPA fallback:** The frontend is a client-side SPA. Without `try_files $uri /index.html` in Nginx, refreshing any deep URL (e.g. `/cafes/edit/123`) would return a 404 from the web server instead of serving the React app.
 * **Optimized Data Grids:** Server-side filtering and Ag-Grid cell renderers are used to maintain high performance and provide deep-linked navigation between Café and Employee views.
