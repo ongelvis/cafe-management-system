@@ -4,8 +4,8 @@ A full-stack web application for managing cafes and their employees. Built with 
 
 ## Live Demo
 
-* **Frontend:** [Insert your deployed URL here]
-* **API:** [Insert your deployed backend URL here]
+* **Frontend:** https://cafe-frontend.up.railway.app
+* **API:** https://cafe-management-system-production-a6ad.up.railway.app
 
 ---
 
